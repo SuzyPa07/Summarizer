@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Aspect-Based Product Feedback Summarizer</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Aspect-Based E-Commerce Product Feedback Summarizer</h1>
+
+        <p class="subtitle">
+            Analyze customer reviews and generate aspect-wise sentiment summaries.
+        </p>
+
+
+        <!-- Product Name -->
+
+        <div class="card">
+
+            <label>Product Name</label>
+
+            <input
+                type="text"
+                id="product"
+                placeholder="Example: CeraVe Moisturizing Cream"
+            >
+
+        </div>
+
+
+        <!-- Customer Review -->
+
+        <div class="card">
+
+            <label>Customer Review</label>
+
+            <textarea
+                id="review"
+                rows="8"
+                placeholder="Paste customer review here..."
+            ></textarea>
+
+        </div>
+
+
+        <!-- Analyze Button -->
+
+        <button onclick="analyzeReview()">
+            Analyze Review
+        </button>
+
+
+        <!-- Loading -->
+
+        <div id="loading">
+
+            Processing...
+
+        </div>
+
+
+        <!-- Result -->
+
+        <div class="result" id="result">
+
+            <h2>Analysis Result</h2>
+
+            <div id="output"></div>
+
+        </div>
+
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
