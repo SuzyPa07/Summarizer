@@ -1,6 +1,6 @@
 from app import preprocessing
 
-file_path = "data/reviews_0-250.csv"
+file_path = "data/1429_1.csv"
 
 df = preprocessing.preprocess_dataset(file_path)
 

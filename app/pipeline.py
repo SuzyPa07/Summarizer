@@ -1,28 +1,66 @@
+import re
+
 from app.preprocessing import clean_text
 from app.aspect_extraction import extract_aspects
-from app.sentiment_analysis import analyze_sentiment
+from app.sentiment_analysis import ASPECT_TERMS
+from app.roberta_sentiment import analyze_with_roberta
 
 
-def analyze_review(review, domain="electronics"):
+def get_aspect_text(review, aspect):
+    """
+    Find sentences that mention the selected aspect.
+    If none are found, use the complete review.
+    """
 
-    # Step 1: Preprocess
+    keywords = ASPECT_TERMS.get(aspect, [aspect])
+
+    sentences = re.split(
+        r"[.!?]+|\b(?:but|however|although|though)\b",
+        review,
+        flags=re.IGNORECASE
+    )
+
+    relevant_sentences = []
+
+    for sentence in sentences:
+        for keyword in keywords:
+            pattern = r"\b" + re.escape(keyword) + r"\b"
+
+            if re.search(pattern, sentence, re.IGNORECASE):
+                relevant_sentences.append(sentence.strip())
+                break
+
+    if relevant_sentences:
+        return " ".join(relevant_sentences)
+
+    return review
+
+
+def analyze_review(review):
+
+    # Step 1: Preprocess the review
     clean_review = clean_text(review)
 
-    # Step 2: Extract aspects
-    aspects = extract_aspects(clean_review, domain)
+    # Step 2: Extract product aspects
+    aspects = extract_aspects(clean_review)
 
-    # Step 3: Analyze sentiment
-    sentiment = analyze_sentiment(clean_review)
-
-    # Create aspect-wise results
+    # Step 3: Analyse sentiment using pretrained RoBERTa
     aspect_results = {}
 
     for aspect in aspects:
+
+        aspect_text = get_aspect_text(clean_review, aspect)
+
+        sentiment = analyze_with_roberta(aspect_text)
+
         aspect_results[aspect] = sentiment
 
-    # If no aspect is found
+    # If no aspect is found, analyse the complete review
     if not aspect_results:
-        aspect_results["general"] = sentiment
+
+        aspect_results["general"] = analyze_with_roberta(
+            clean_review
+        )
 
     return {
         "clean_review": clean_review,
@@ -34,14 +72,42 @@ def analyze_review(review, domain="electronics"):
 def create_summary(aspects):
 
     if "general" in aspects:
-        return "The review expresses a " + aspects["general"].lower() + " opinion."
+        return (
+            "The review expresses a "
+            + aspects["general"].lower()
+            + " overall opinion."
+        )
 
-    aspect_names = list(aspects.keys())
+    positive_aspects = [
+        aspect for aspect, sentiment in aspects.items()
+        if sentiment == "Positive"
+    ]
 
-    return (
-        "The review discusses "
-        + ", ".join(aspect_names)
-        + " and expresses an overall "
-        + aspects[aspect_names[0]].lower()
-        + " opinion."
-    )
+    negative_aspects = [
+        aspect for aspect, sentiment in aspects.items()
+        if sentiment == "Negative"
+    ]
+
+    neutral_aspects = [
+        aspect for aspect, sentiment in aspects.items()
+        if sentiment == "Neutral"
+    ]
+
+    parts = []
+
+    if positive_aspects:
+        parts.append(
+            "Positive feedback on " + ", ".join(positive_aspects)
+        )
+
+    if negative_aspects:
+        parts.append(
+            "Negative feedback on " + ", ".join(negative_aspects)
+        )
+
+    if neutral_aspects:
+        parts.append(
+            "Neutral feedback on " + ", ".join(neutral_aspects)
+        )
+
+    return ". ".join(parts) + "."
